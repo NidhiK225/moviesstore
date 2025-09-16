@@ -36,9 +36,12 @@
       <div class="text-end">
         <a class="btn btn-outline-secondary mb-2"><b>Total to pay:</b> ${{ template_data.cart_total }}</a>
         {% if template_data.movies_in_cart|length > 0 %}
-        <a href="{% url 'cart.purchase' %}"
-          class="btn bg-dark text-white mb-2">Purchase
-        </a>
+        
+        <!-- Trigger modal instead of direct link -->
+        <button type="button" class="btn bg-dark text-white mb-2" data-bs-toggle="modal" data-bs-target="#checkoutModal">
+          Purchase
+        </button>
+
         <a href="{% url 'cart.clear' %}">
           <button class="btn btn-danger mb-2">
             Remove all movies from Cart
@@ -49,4 +52,56 @@
     </div>
   </div>
 </div>
+{% if template_data.statements %}
+    <div class="row mt-4">
+      <div class="col">
+        <h4>Your Past Checkout Statements</h4>
+        <ul class="list-group">
+          {% for s in template_data.statements %}
+            <li class="list-group-item">
+              <strong>{{ s.name|default:"Anonymous" }}</strong>
+              <small class="text-muted">({{ s.created_at|date:"M d, Y H:i" }})</small>
+              <p class="mb-0">{{ s.thoughts }}</p>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+    {% endif %}
+
+<!-- Modal for Checkout Confirmation -->
+<div class="modal fade" id="checkoutModal" tabindex="-1" aria-labelledby="checkoutModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      
+      <div class="modal-header">
+        <h5 class="modal-title" id="checkoutModalLabel">Confirm Checkout</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      
+      <form method="POST" action="{% url 'cart.purchase' %}" id="checkout-form">
+        {% csrf_token %}
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="user_name" class="form-label">Your Name (optional):</label>
+            <input type="text" name="user_name" id="user_name" class="form-control" placeholder="Enter your name">
+          </div>
+          <div class="mb-3">
+            <label for="user_thoughts" class="form-label">Your Thoughts (optional):</label>
+            <textarea name="user_thoughts" id="user_thoughts" class="form-control" rows="3" placeholder="What did you think about checkout?"></textarea>
+          </div>
+        </div>
+        
+        <div class="modal-footer">
+          <!-- Cancel just closes the popup -->
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <!-- Submit actually checks out -->
+          <button type="submit" class="btn btn-success">Submit</button>
+        </div>
+      </form>
+      
+    </div>
+  </div>
+</div>
 {% endblock content %}
+

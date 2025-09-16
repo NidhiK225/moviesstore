@@ -19,3 +19,11 @@ class Item(models.Model):
     def __str__(self):
         return str(self.id) + ' - ' + self.movie.name
 
+class CheckoutStatement(models.Model):
+    order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name="statement")
+    name = models.CharField(max_length=100, blank=True, null=True)
+    thoughts = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Statement for Order {self.order.id} by {self.name or 'Anonymous'}"

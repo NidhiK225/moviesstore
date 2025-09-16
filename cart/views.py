@@ -4,6 +4,8 @@ from movies.models import Movie
 from .utils import calculate_cart_total
 from .models import Order, Item
 from django.contrib.auth.decorators import login_required
+from .models import Order, Item, CheckoutStatement
+
 
 def index(request):
     cart_total = 0
@@ -14,6 +16,14 @@ def index(request):
         movies_in_cart = Movie.objects.filter(id__in=movie_ids)
         cart_total = calculate_cart_total(cart, movies_in_cart)
 
+    user_statements = []
+    if request.user.is_authenticated:
+        orders_with_statements = Order.objects.filter(
+            user=request.user,
+            statement__isnull=False
+        ).select_related("statement")
+
+        user_statements = [o.statement for o in orders_with_statements]
     template_data = {}
     template_data['title'] = 'Cart'
     template_data['movies_in_cart'] = movies_in_cart
@@ -50,6 +60,18 @@ def purchase(request):
         item.order = order
         item.quantity = cart[str(movie.id)]
         item.save()
+
+    name = request.POST.get("user_name", "").strip()
+    thoughts = request.POST.get("user_thoughts", "").strip()
+
+    if name or thoughts:  # only save if user entered something
+        CheckoutStatement.objects.create(
+            order=order,
+            name=name if name else None,
+            thoughts=thoughts if thoughts else None
+    )
+
+
     request.session['cart'] = {}
     template_data = {}
     template_data['title'] = 'Purchase confirmation'
@@ -57,3 +79,4 @@ def purchase(request):
     return render(request, 'cart/purchase.html',
         {'template_data': template_data})
 
+    
